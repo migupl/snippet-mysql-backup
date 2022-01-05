@@ -1,17 +1,14 @@
-:icons: font
-:icon-set: fa
-
 = Back up MySQL databases to... anywhere!
 
 A simple way to do MySQL database backups and restores when
 the *database is running in a container*
-is using the mysql-backup
-link:https://github.com/databacker/mysql-backup[icon:github[]^].
+is using the
+link:https://github.com/databacker/mysql-backup[mysql-backup^].
 
 To run a backup, you have to launch _mysql-backup_ image as a container with the correct parameters.
 Everything is controlled by environment variables passed to the container
-and there are a lot of them
-link:https://github.com/databacker/mysql-backup#backup[icon:external-link[]^]
+and there are
+link:https://github.com/databacker/mysql-backup#backup[a lot of them^]
 
 Let's look at a simple example with *Amazon Aurora*
 
@@ -36,11 +33,11 @@ The parameters used are self-explanatory except for the NICE parameter.
 
 _NICE_=*true* means that mysqldump performs with ionice and nice option
 (see
-link:http://eosrei.net/articles/2013/03/forcing-mysqldump-always-be-nice-cpu-and-io[Forcing a mysqldump to always be nice to CPU and I/O^]
+'link:http://eosrei.net/articles/2013/03/forcing-mysqldump-always-be-nice-cpu-and-io[Forcing a mysqldump to always be nice to CPU and I/O^]'
 for more information)
 
-In order to run the backup we must use the _mysql-back_ container
-link:https://github.com/databacker/mysql-backup#database-container[icon:external-link[]^]
+In order to run the backup we must use the
+link:https://github.com/databacker/mysql-backup#database-container[mysql-backup container^]
 
 Docker will be run as current host user for working easily with the generated backup files.
 
