@@ -1,0 +1,101 @@
+:icons: font
+:icon-set: fa
+
+= Back up MySQL databases to... anywhere!
+
+A simple way to do MySQL database backups and restores when
+the *database is running in a container*
+is using the mysql-backup
+link:https://github.com/databacker/mysql-backup[icon:github[]^].
+
+To run a backup, you have to launch _mysql-backup_ image as a container with the correct parameters.
+Everything is controlled by environment variables passed to the container
+and there are a lot of them
+link:https://github.com/databacker/mysql-backup#backup[icon:external-link[]^]
+
+Let's look at a simple example with *Amazon Aurora*
+
+A simple secrets file with some interesting parameters will be used.
+
+[source, bash]
+----
+➜ cat .env
+# https://github.com/databacker/mysql-backup#backup
+
+DB_SERVER=<hostname to connect to database. Required>
+DB_PORT=<port to use to connect to database. Optional, defaults to 3306>
+DB_USER=<username for the database>
+DB_PASS=<password for the database>
+
+RUN_ONCE=true
+DB_DUMP_DEBUG=true
+NICE=true
+----
+
+The parameters used are self-explanatory except for the NICE parameter.
+
+_NICE_=*true* means that mysqldump performs with ionice and nice option
+(see
+link:http://eosrei.net/articles/2013/03/forcing-mysqldump-always-be-nice-cpu-and-io[Forcing a mysqldump to always be nice to CPU and I/O^]
+for more information)
+
+In order to run the backup we must use the _mysql-back_ container
+link:https://github.com/databacker/mysql-backup#database-container[icon:external-link[]^]
+
+Docker will be run as current host user for working easily with the generated backup files.
+
+Run the backup as follow
+
+[source, bash]
+----
+➜ docker run -d \
+--env-file ./.env \
+-u $(id -u ${USER}):$(id -g ${USER}) \
+-e DB_NAMES=my-aurora-database \
+-e DB_DUMP_TARGET=/db \
+-v $(pwd):/db \
+databack/mysql-backup
+➜
+➜ docker ps --format '{{.Names}}'
+NAMES
+great_northcutt
+----
+
+Inside the running container you can see
+
+[source, bash]
+----
+➜ docker exec -it great_northcutt /bin/bash
+bash-4.4$ bash-4.4$ ps -ef
+PID   USER     TIME  COMMAND
+    1 1000      0:00 {entrypoint} /bin/bash /entrypoint
+   12 1000      0:11 mysqldump -h auroradbx-cluster.cluster-xxxxxxxxxxxx.eu-west-1.rds.amazonaws.com -P 3306 -uadmin -px xxxxxxxxxxxxxxxxxxxxx --databases my-aurora-database
+   13 1000      0:00 /bin/bash
+   18 1000      0:00 ps -ef
+bash-4.4$
+bash-4.4$ find /tmp -type f | xargs ls -lh
+-rw-r--r--    1 1000     1000      177.3M Dec 12 15:36 /tmp/backup.1/backup_2020-12-12T15:34:49Z.sql
+bash-4.4$ top
+Mem: 32343788K used, 300496K free, 1090524K shrd, 675576K buff, 24608460K cached
+CPU:  30% usr   6% sys   1% nic  60% idle   0% io   1% irq   0% sirq
+Load average: 3.57 3.15 2.11 2/1800 22
+  PID  PPID USER     STAT   VSZ %VSZ CPU %CPU COMMAND
+   12     1 1000     SN    8976   0%   0   1% mysqldump -h auroradbx-cluster.cluster-xxxxxxxxxxxx.eu-west-1.rds.amazonaws.com -P 3306 -uadmin -px xxxxxxxxxxxxxxxxxxxxx --databases my-aurora-database
+    1     0 1000     S     2520   0%   4   0% {entrypoint} /bin/bash /entrypoint
+   13     0 1000     S     2312   0%   4   0% /bin/bash
+   22    13 1000     R     1532   0%   2   0% top
+----
+
+Following the log and redirect it to a local file is easy as follow
+
+[source, bash]
+----
+➜ docker logs --follow great_northcutt | tee -a ./$(date +%Y-%m-%d).my-aurora-database.log
++ file_env DB_SERVER
++ local var=DB_SERVER
++ local fileVar=DB_SERVER_FILE
++ local def=
++ '[' auroradbx-cluster.cluster-xxxxxxxxxxxx.eu-west-1.rds.amazonaws.com ']'
++ '[' '' ']'
+...
+----
