@@ -96,3 +96,24 @@ Following the log and redirect it to a local file is easy as follow
 + '[' '' ']'
 ...
 ----
+
+And, if you want to know how big the backup might be, you can use the query
+
+[source,sql]
+----
+SELECT table_schema AS "Database",
+       ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS "Size (MB)"
+FROM information_schema.TABLES
+WHERE table_schema = 'my-aurora-database'
+GROUP BY table_schema;
+
+# +------------------+---------+
+# |Database          |Size (MB)|
+# +------------------+---------+
+# |my-aurora-database|471.03   |
+# +------------------+---------+
+----
+
+Good luck and... run your backup (it takes time)
+
+
